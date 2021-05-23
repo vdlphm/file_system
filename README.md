@@ -1,4 +1,7 @@
 # file_system
+***
+1. I was unable to create a CLI for webpage so frontend won't work. However, backend is fully operational. To test, use POSTMAN to make call to ```http://127.0.0.1:8000/``` with appropriate request according to [link](https://docs.google.com/document/d/1fG_gXxn6YWU54vWo3KuIHg9FzdicbvA-nzNCzVuMgYA/edit?usp=sharing) after sunning backend.
+***
 
 # file system backend
 
@@ -69,3 +72,52 @@ GRANT ALL PRIVILEGES ON DATABASE <database name> TO <username>;
 5. Continue from Step 6 above(Apply migrations to your local DB).
 
 # file system frontend
+
+0. Make sure backend is running
+
+# file system CLI syntax:
+***
+All path must be absolute path to folder/file and must end with '/' in the end.
+For instance:
+- a valid path for FOLDER is <root/> for folder name 'root or <root/folder/> for folder name 'folder' inside 'root' folder.
+- a valid path for FILE is <root/file/> for file name 'file' in 'root' folder
+***
+
+1. create filde/folder
+- format: ```cr [PATH] [DATA]```
+- [PATH] is required but [DATA] is optional. If [DATA] is provided, server will create a file, otherwise, server will create a folder.
+- example:
+    - for folder: cr root_folder/
+    - for file: cr root/file/ this is a file
+
+2. cat file
+- format: ```cat [FIlE PATH]```
+- [FILE PATH] is required.
+- example:
+    - cat root/file/
+
+3. list folder
+- format: ```list [FOLDER PATH]```
+- [FOLDER PATH] is required.
+- example:
+    - list root/
+
+4. move folder/file
+- format: ```mv [PATH] [NEW DIRECTORY PATH]```
+- [PATH] and [NEW DIRECTORY PATH] are required.
+- example:
+    - moving folder to folder_1: mv root/folder/ root/folder_1/
+
+5. remove folder/file
+- format: ```rm [PATH]```
+- [PATH] is required.
+- example:
+    - rm root/folder/
+
+5. update folder/file
+- format: ```up [PATH] [NEW NAME] [DATA]```
+- [DATA] is optional but [PATH] and [NEW NAME] are required. If [DATA] is provided, server will update a file, otherwise, server will update a folder or file depends on the [PATH].
+- example:
+    - for file with no new data: up root/file/ file_new
+    - for file with new data: up root/file/ file_new this is a test for move
+    - for folder: up root/folder/ folder_new

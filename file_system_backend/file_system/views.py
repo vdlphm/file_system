@@ -1,10 +1,9 @@
 import json
 import django
-from django.http.response import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, HttpResponseServerError, JsonResponse
+from django.http.response import JsonResponse
 from django.shortcuts import render
 from django.db import IntegrityError
 
-#import file_system_backend.file_system.models as md
 import file_system.models as md
 
 from django.utils import timezone
@@ -38,29 +37,30 @@ def create(request):
             f_path = jsonData['path']
             f_data = jsonData['data']
         except Exception as ex:
-            return HttpResponseBadRequest('Request body is not in the correct format')
+            return JsonResponse(status=400, data={'message': 'Request body is not in the correct format'})
         
         # check path validity
         check = pathValid(f_path)
         if check:
-             return HttpResponseBadRequest(check)
+            return JsonResponse(status=400, data={'message': check})
         
         # find file/folder name from path
         sep_id = find(f_path)
         f_name = f_path[:len(f_path) - 1]
         if sep_id != -1:
+            f_dir_path = f_path[:sep_id + 1]
             f_name = f_path[sep_id + 1:len(f_path) - 1]
         else:
+            f_dir_path = ""
             if not (f_data is None):
-                return HttpResponseBadRequest('File must reside in a folder!')
+                return JsonResponse(status=400, data={'message': 'File must reside in a folder!'})
         
         # retrieve parent folder
-        f_dir_path = f_path[:f_path.index((f_name))]
         if sep_id != -1:
             try:
                 f_dir = md.Folder.objects.get(path=f_dir_path)
             except md.Folder.DoesNotExist:
-                return HttpResponseNotFound('Folder at path <{}> does not exist.'.format(f_dir_path))
+                return JsonResponse(status=404, data={'message': 'Folder at path <{}> does not exist.'.format(f_dir_path)})
         else:
             f_dir = None
 
@@ -71,13 +71,13 @@ def create(request):
             else:
                 md.File(path=f_path, name=f_name, directory=f_dir, create_at=timezone.now(), data=f_data).save()
         except IntegrityError:
-            return HttpResponseForbidden('Folder <{}> already has a file/folder <{}>'.format(f_dir_path, f_name))
+            return JsonResponse(status=43, data={'message': 'Folder <{}> already has file.folder name <{}>.'.format(f_dir_path, f_name)})
         except Exception as ex:
-            return HttpResponseServerError('Cannot create file/folder because {}'.format(ex))
+            return JsonResponse(status=500, data={'message': 'Cannote create because {}'.format(ex)})
 
         return JsonResponse(status=200, data={'message': 'create successfully'})
     else:
-        return HttpResponseBadRequest('Use POST request for create')
+        return JsonResponse(status=400, data={'message': 'Use POST request'})
 
 # view file content
 def catFile(request):
@@ -87,23 +87,23 @@ def catFile(request):
         try:
             f_path = jsonData['path']
         except Exception as ex:
-            return HttpResponseBadRequest('Request body is not in the right format')
+            return JsonResponse(status=400, data={'message': 'Request body is not in the correct format'})
         
         # check path validity
         check = pathValid(f_path)
         if check:
-            return HttpResponseBadRequest(check)
+            return JsonResponse(status=400, data={'message': check})
 
         # retrieve file data
         try:
             f_object = md.File.objects.get(path=f_path)
             f_data = f_object.data
         except md.File.DoesNotExist:
-            return HttpResponseNotFound('File <{}> does not exist'.format(f_path))
+            return JsonResponse(status=404, data={'message': 'File <{}> does not exist'.format(f_path)})
         
         return JsonResponse(status=200, data={'message': 'obtain successfully', 'data': f_data})
     else:
-        return HttpResponseBadRequest('Use GET request instead')
+        return JsonResponse(status=400, data={'message': 'Use GET instead'})
 
 # view folder content
 def listFolder(request):
@@ -113,12 +113,12 @@ def listFolder(request):
         try:
             f_path = jsonData['path']
         except Exception as ex:
-            return HttpResponseBadRequest('Request body is not in the right format')
+            return JsonResponse(status=400, data={'message': 'Request body is not in the correct format'})
         
         # check path validity
         check = pathValid(f_path)
         if check:
-            return HttpResponseBadRequest(check)
+            return JsonResponse(status=400, data={'message': check})
 
         # retrieve folder items
         try:
@@ -132,10 +132,10 @@ def listFolder(request):
             for file in file_list:
                 items.append(file)
         except md.Folder.DoesNotExist:
-            return HttpResponseNotFound('<{}> does not exist'.format(f_path))
+            return JsonResponse(status=404, data={'message': '<{}> does not exist'.format(f_path)})
         return JsonResponse(status=200, data={'message': 'obtain successfully', 'data': items})
     else:
-        return HttpResponseBadRequest('Use GET request instead')
+        return JsonResponse(status=400, data={'message': 'Use GET instead'})
 
 # helper function for move folder ****
 def folderUpdate(folder_obj, new_dir_path):
@@ -160,20 +160,20 @@ def moveTo(request):
             f_path = jsonData['path']
             new_dir = jsonData['directory']
         except Exception as ex:
-            return HttpResponseBadRequest('Request body is not in the right format')
+            return JsonResponse(status=400, data={'message': 'Request body is not in the correct format'})
 
         # check path validity
         check = pathValid(f_path)
         if check:
-            return HttpResponseBadRequest(check)
+            return JsonResponse(status=400, data={'message': check})
         check = pathValid(new_dir)
         if check:
-            return HttpResponseBadRequest(check)
+            return JsonResponse(status=400, data={'message': check})
         
         # check if destination is a child of folder
         try:
             new_dir.index(f_path)
-            return HttpResponseForbidden('Cannot move <{}> to <{}> because it\'s parent folder'.format(f_path, new_dir))
+            return JsonResponse(status=403, data={'message': 'Cannot move <{}> to <{}> because it\'s parent folder'.format(f_path, new_dir)})
         except ValueError:
             pass
 
@@ -181,7 +181,7 @@ def moveTo(request):
         try:
             new_folder = md.Folder.objects.get(path=new_dir)
         except md.Folder.DoesNotExist:
-            return HttpResponseNotFound('<{}> does not exist'.format(new_dir))
+            return JsonResponse(status=404, data={'message': '<{}> does not exist'.format(new_dir)})
 
         # retrieve file/folder
         done = False
@@ -194,7 +194,7 @@ def moveTo(request):
             try:
                 f_obj = md.Folder.objects.get(path=f_path)
             except md.Folder.DoesNotExist:
-                return HttpResponseNotFound('<{}> does not exist'.format(f_path))
+                return JsonResponse(status=404, data={'message': '<{}> does not exist'.format(f_path)})
 
         # move file to new folder
         new_path = new_dir + f_obj.name + '/'
@@ -214,7 +214,7 @@ def moveTo(request):
         else:
             try:
                 all_folder = md.Folder.objects.filter(directory=f_obj)
-                all_file = md.File.object.filter(directory=f_obj)
+                all_file = md.File.objects.filter(directory=f_obj)
                 f_obj.path = new_path
                 f_obj.directory= new_folder
                 f_obj.save()
@@ -228,12 +228,12 @@ def moveTo(request):
                     folderUpdate(folder, new_path)
                 return JsonResponse(status=200, data={'message': 'move successfully'})
             except IntegrityError:
-                return HttpResponseForbidden('Folder <{}> already has folder name <{}>'.format(new_folder, f_obj.name))
+                return JsonResponse(status=403, data={'message': 'Folder <{}> already has folder name <{}>'.format(new_folder, f_obj.name)})
             except Exception as ex:
-                return HttpResponseServerError('Cannot move {}'.format(ex))
+                return JsonResponse(status=500, data={'message': 'Cannot move {}'.format(ex)})
             
     else:
-        return HttpResponseBadRequest('Use PUT request instead')
+        return JsonResponse(status=400, data={'message': 'Use PUT instead'})
 
 # delete folder/file
 def delete(request):
@@ -243,12 +243,12 @@ def delete(request):
         try:
             f_path = jsonData['path']
         except Exception as ex:
-            return HttpResponseBadRequest('Request is not in the right format')
+            return JsonResponse(status=400, data={'message': 'Request body is not in the correct format'})
 
         # check path validity
         check = pathValid(f_path)
         if check:
-            return HttpResponseBadRequest(check)
+            return JsonResponse(status=400, data={'message': check})
         
         # retrieve folder/file and delete
         done = False
@@ -261,12 +261,12 @@ def delete(request):
             try:
                 f_obj = md.File.objects.get(path=f_path)
             except md.File.DoesNotExist:
-                return HttpResponseNotFound('Folder/file <{}> does not exist'.format(f_path))
+                return JsonResponse(status=404, data={'message': 'Folder/file <{}> does not exist'.format(f_path)})
 
         f_obj.delete()
         return JsonResponse(status=200, data={'message': 'delete successfully'})
     else:
-        return HttpResponseBadRequest('Use PUT request instead')
+        return JsonResponse(status=403, data={'message': 'Use PUT request instead'})
 
 # update folder/file ****
 def update(request):
@@ -278,12 +278,12 @@ def update(request):
             new_name = jsonData['name']
             new_data = jsonData['data']
         except Exception as ex:
-            return HttpResponseBadRequest('Request body is not in the right format')
+            return JsonResponse(status=400, data={'message': 'Request body is not in the correct format'})
 
         # check path validity
         check = pathValid(f_path)
         if check:
-             return HttpResponseBadRequest(check)
+            return JsonResponse(status=400, data={'message': check})
 
         # update file if path points to file
         try:
@@ -300,9 +300,9 @@ def update(request):
         except md.File.DoesNotExist:
             pass
         except IntegrityError:
-            return HttpResponseForbidden('Folder <{}> already has file name <{}>'.format(new_folder, f_obj.name))
+            return JsonResponse(status=403, data={'message': 'Folder <{}> already has folder name <{}>'.format(f_path[:id], f_obj.name)})
         except Exception as ex:
-            return HttpResponseServerError('Cannot update folder because {}'.format(ex))
+            return JsonResponse(status=500, data={'message': 'Cannot update folder because {}'.format(ex)})
 
         # update folder otherwise
         try:
@@ -323,9 +323,11 @@ def update(request):
             for folder in folder_list:
                 folderUpdate(folder, new_path)
             return JsonResponse(status=200, data={'message': 'update successfully'})
+        except IntegrityError:
+            return JsonResponse(status=403, data={'message': 'Folder <{}> already has folder name <{}>'.format(f_path[:id], f_obj.name)})
         except md.Folder.DoesNotExist:
-            return HttpResponseNotFound('Folder/file <{}> does not exist'.format(f_path))
+            return JsonResponse(status=404, data={'message': 'Folder/file <{}> does not exist'.format(f_path)})
         except Exception as ex:
-            return HttpResponseServerError('Cannot update file because {}'.format(ex))
+            return JsonResponse(status=500, data={'message': 'Cannot update file because {}'.format(ex)})
     else:
-        return HttpResponseBadRequest('Use PUT request instead')
+        return JsonResponse(status=400, data={'message': 'Use PUT request instead'})
