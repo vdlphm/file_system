@@ -77,7 +77,7 @@ GRANT ALL PRIVILEGES ON DATABASE <database name> TO <username>;
 All path must be absolute path to folder/file and must end with '/' in the end.
 For instance:
 - a valid path for FOLDER is <root/> for folder name 'root or <root/folder/> for folder name 'folder' inside 'root' folder.
-- a valid path for FILE is <root/file> for file name 'file' in 'root' folder
+- a valid path for FILE is <root/file/> for file name 'file' in 'root' folder
 ***
 
 1. create filde/folder
