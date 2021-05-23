@@ -206,9 +206,9 @@ def moveTo(request):
                 f_obj.save()
                 return JsonResponse(status=200, data={'message': 'move successfully'})
             except IntegrityError:
-                return HttpResponseForbidden('Folder <{}> already has file name <{}>'.format(new_folder, f_obj.name))
+                return JsonResponse(status=403, data={'message': 'Folder <{}> already has file name <{}>'.format(new_folder, f_obj.name)})
             except Exception as ex:
-                return HttpResponseServerError('Cannot move {}'.format(ex))
+                return JsonResponse(status=500, data={'message': 'Cannot move {}'.format(ex)})
 
         # move folder to new folder
         else:
