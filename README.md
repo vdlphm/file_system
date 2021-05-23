@@ -69,3 +69,33 @@ GRANT ALL PRIVILEGES ON DATABASE <database name> TO <username>;
 5. Continue from Step 6 above(Apply migrations to your local DB).
 
 # file system frontend
+
+0. Make sure backend is running
+
+# file system CLI syntax:
+***
+All path must be absolute path to folder/file and must end with '/' in the end.
+For instance:
+- a valid path for FOLDER is <root/> for folder name 'root or <root/folder/> for folder name 'folder' inside 'root' folder.
+- a valid path for FILE is <root/file> for file name 'file' in 'root' folder
+***
+
+1. create filde/folder
+
+- format: ```cr [PATH] [DATA]```
+
+2. cat file
+
+- format: ```cat [FIlE PATH]```
+
+3. list folder
+- format: ```list [FOLDER PATH]```
+
+4. move folder/file
+- format: ```mv [PATH] [NEW DIRECTORY PATH]```
+
+5. remove folder/file
+- format: ```rm [PATH]```
+
+5. update folder/file
+- format: ```up [PATH] [NEW NAME] [DATA]```
