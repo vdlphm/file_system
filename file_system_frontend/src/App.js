@@ -23,4 +23,15 @@ function App() {
   );
 }
 
+const regexPath = new RegExp('^[/a-zA-Z0-9  _-]+$');
+const regexName = new RegExp('^[a-zA-Z0-9  _-]+$');
+// test path against regex
+function matchPath(s) {
+  return regexPath.test(s);
+}
+// test name against regex
+function matchName(s) {
+  return regexName.test(s);
+}
+
 export default App;
